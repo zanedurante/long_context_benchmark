@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directory {{ dir_id }}</title>
+    <style>
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        .video-item {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Directory {{ dir_id }}</h1>
+    <h2>Videos</h2>
+    <div class="video-grid">
+        {% for video in videos %}
+            <div class="video-item">
+                <video width="320" height="240" controls>
+                    <source src="{{ url_for('video', dir_id=dir_id, filename=video) }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        {% endfor %}
+    </div>
+    <h2>Questions</h2>
+    <pre>{{ questions }}</pre>
+    <form action="{{ url_for('save_answer', dir_id=dir_id) }}" method="post">
+        <label for="answer">Your Answer:</label><br>
+        <textarea id="answer" name="answer" rows="4" cols="50"></textarea><br><br>
+        <input type="submit" value="Save Answer">
+    </form>
+    <a href="{{ url_for('index') }}">Back to Directory List</a>
+</body>
+</html>

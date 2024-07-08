@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Question Answering</title>
+</head>
+<body>
+    <h1>Select a Directory</h1>
+    <ul>
+        {% for dir in directories %}
+            <li><a href="{{ url_for('directory', dir_id=dir) }}">Directory {{ dir }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
