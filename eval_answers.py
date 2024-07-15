@@ -175,8 +175,8 @@ def idx2pred(idx, kind='human'):
 
 
 if __name__ == "__main__":
-    model_output = "blind_gpt4o" # Alternatively, blind_gpt4o, 16_frames_phi3, 16_frames_gpt-4o, 16_frames_gpt-4-turbo, human
-    scoring_model = "gpt-4-turbo" # Alternatively, gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+    model_output = "all_frames_gemini-1.5-flash" # Alternatively, blind_gpt4o, 16_frames_phi3, 16_frames_gpt-4o, 16_frames_gpt-4-turbo, human
+    scoring_model = "gpt-4o" # Alternatively, gpt-4o, gpt-4-turbo, gpt-3.5-turbo
     scores_lwm = []
     accs_lwm = []
     scores_eqa = []
@@ -184,6 +184,7 @@ if __name__ == "__main__":
     answers = []
     preds = []
     questions = []
+    num_skipped = 0
     if False: # Save all model outputs to answers.txt
         pred_str = ""
         for idx in tqdm(range(100)):
@@ -194,24 +195,25 @@ if __name__ == "__main__":
         with open(f'answers.txt', 'w') as f:
             f.write(pred_str)
         exit()
-    
+
     for idx in tqdm(range(100)):
-        question = idx2question(idx)
-        answer = idx2answer(idx)
-        pred = idx2pred(idx, kind=model_output)
-        questions.append(question)
-        answers.append(answer)
-        preds.append(pred)
         try:
+            question = idx2question(idx)
+            answer = idx2answer(idx)
+            pred = idx2pred(idx, kind=model_output)
+            questions.append(question)
+            answers.append(answer)
+            preds.append(pred)
             score_lwm = eval(get_score_lwm(question, answer, pred, model=scoring_model))
             score_eqa = get_score_openeqa(question, answer, pred, model=scoring_model)
             score_eqa_orig = get_score_openeqa_original(question, answer, pred, model=scoring_model)
             score_eqa = eval(score_eqa)
             score_eqa_orig = eval(score_eqa_orig)
         except:
-            idx -= 1
-            print("Error with evaluating video", idx, "trying again...")
-            continue # Retry the same idx
+            #idx -= 1
+            print("Error with evaluating video", idx, "skipping...")
+            num_skipped += 1
+            continue # No longer retry the same idx
 
         if score_lwm['pred'] == 'yes':
             accs_lwm.append(1)
@@ -226,6 +228,7 @@ if __name__ == "__main__":
     print("Accuracy LWM:", sum(accs_lwm)/len(accs_lwm))
     print("Mean score EQA (original):", sum(scores_eqa_orig)/len(scores_eqa_orig))
     print("Mean score EQA (new):", sum(scores_eqa)/len(scores_eqa))
+    print("Number of videos skipped:", num_skipped, "out of 100")
 
     # Save scores per video to file
     with open(f'scores.txt', 'w') as f:

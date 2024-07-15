@@ -55,7 +55,7 @@ def get_video_frames(video_path, num_frames=16):
 
 def prompt_gpt4v_images(frame_dir, text_prompt, model="gpt-4o"):
     frames = os.listdir(frame_dir)
-    frames = sorted([f"{frame_dir}/{frame}" for frame in frames])
+    frames = sorted([f"{frame_dir}/{frame}" for frame in frames if frame.endswith('.jpg')])
 
     encoded_frames = [encode_frame_from_image_path(frame) for frame in frames]
 

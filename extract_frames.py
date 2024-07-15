@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import os
 from tqdm import tqdm
+from PIL import Image
+from moviepy.editor import ImageSequenceClip, ImageClip
+
 
 
 # get number of frames + duration in seconds
@@ -89,13 +92,41 @@ def get_frames_across_video_list(video_paths, num_frames):
     return frames
 
 
+def create_video_from_images(image_files, output_path, fps=1):
+    # Ensure there is at least one image file
+    if not image_files:
+        raise ValueError("No image files provided")
+
+    # Get the size of the first image
+    first_image = Image.open(image_files[0])
+    first_image_size = first_image.size
+
+    # Resize all images to the size of the first image
+    resized_images = []
+    for image_file in image_files:
+        image = Image.open(image_file)
+        resized_image = image.resize(first_image_size, Image.LANCZOS)
+        resized_image_path = f"resized_{os.path.basename(image_file)}"
+        resized_image.save(resized_image_path)
+        resized_images.append(resized_image_path)
+
+    # Create a video clip from the resized images
+    clip = ImageSequenceClip(resized_images, fps=fps)
+
+    # Write the video to a file
+    clip.write_videofile(output_path, codec='libx264')
+
+    # Clean up resized images
+    for image_file in resized_images:
+        os.remove(image_file)
+
 if __name__ == "__main__":
     video_dir = "video_files"
     video_dirs = os.listdir(video_dir)
-    video_dirs = [os.path.join(video_dir, d) for d in video_dirs]
+    video_dirs = sorted([os.path.join(video_dir, d) for d in video_dirs])
 
     # for each video_dir, get all the mp4 videos
-    NUM_FRAMES = 64
+    NUM_FRAMES = 16
     for video_dir in tqdm(video_dirs):
         video_paths = sorted([os.path.join(video_dir, f) for f in os.listdir(video_dir) if f.endswith(".mp4")])
         frames = get_frames_across_video_list(video_paths, NUM_FRAMES)
@@ -103,3 +134,12 @@ if __name__ == "__main__":
             os.makedirs(os.path.join(video_dir, f"{NUM_FRAMES}_frames"), exist_ok=True)
             idx_str = str(idx).zfill(4)
             cv2.imwrite(f"{video_dir}/{NUM_FRAMES}_frames/frame_{idx_str}.jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+        
+        # Create a video from the frames
+        image_files = [os.path.join(video_dir, f"{NUM_FRAMES}_frames", f) for f in os.listdir(os.path.join(video_dir, f"{NUM_FRAMES}_frames")) if f.endswith(".jpg")]
+        image_files = sorted(image_files)
+        output_path = os.path.join(video_dir, f"{NUM_FRAMES}_frames", "combined.mp4")
+        create_video_from_images(image_files, output_path, fps=1)
+        
+        
+        

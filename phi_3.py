@@ -21,7 +21,7 @@ def generate_phi3_response(image_dir, text_input):
     # Loads all images from image_dir into a list of PIL images and pass to phi-3
     images = []
     image_files = sorted(os.listdir(image_dir))
-    image_files = [os.path.join(image_dir, image_file) for image_file in image_files]
+    image_files = [os.path.join(image_dir, image_file) for image_file in image_files if image_file.endswith(".jpg")]
     for image_file in image_files:
         image = Image.open(image_file)
         images.append(image)
