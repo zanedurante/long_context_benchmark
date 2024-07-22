@@ -8,6 +8,8 @@ PROBLEM_VIDEOS = [
     "1_stock-footage-beef-fillet-slices-being-seasoned-with-pepper-and-salt.mp4"
 ]
 
+OUTPUT_DIR = 'video_files_20'
+
 def download_videos(file_paths, output_dir='video_files'):
     os.makedirs(output_dir, exist_ok=True)
     
@@ -24,13 +26,13 @@ def download_videos(file_paths, output_dir='video_files'):
 
 
 # Load file_paths from the video_questions file
-with open('video_questions/video_questions_n=10.txt', 'r', errors="ignore") as f:
+with open('video_questions/video_questions_n=20.txt', 'r', errors="ignore") as f:
     video_questions = eval(f.read())
 #    import pdb; pdb.set_trace()
 
 # get the file_paths
 for idx in tqdm(range(len(video_questions))):
-    output_dir = "video_files/" + str(idx) + "/"
+    output_dir = OUTPUT_DIR + "/" + str(idx) + "/"
     os.makedirs(output_dir, exist_ok=True)
     file_paths = video_questions[idx]['file_paths']
     download_videos(file_paths, output_dir=output_dir)

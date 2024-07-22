@@ -152,30 +152,32 @@ import os
 
 def idx2question(idx):
     try:
-        with open(f'video_files/{idx}/questions.txt', 'r') as f:
+        with open(f'{VIDEO_FILES_DIR}/{idx}/questions.txt', 'r') as f:
             question = f.read()
     except:
-        with open(f'video_files/{idx}/question.txt', 'r') as f:
+        with open(f'{VIDEO_FILES_DIR}/{idx}/question.txt', 'r') as f:
             question = f.read()
     return question
 
 def idx2answer(idx):
     try:
-        with open(f'video_files/{idx}/answers.txt', 'r') as f:
+        with open(f'{VIDEO_FILES_DIR}/{idx}/answers.txt', 'r') as f:
             answer = f.read()
     except:
-        with open(f'video_files/{idx}/answer.txt', 'r') as f:
+        with open(f'{VIDEO_FILES_DIR}/{idx}/answer.txt', 'r') as f:
             answer = f.read()
     return answer
 
 def idx2pred(idx, kind='human'):
-    with open(f'video_files/{idx}/{kind}_answer.txt', 'r') as f:
+    with open(f'{VIDEO_FILES_DIR}/{idx}/{kind}_answer.txt', 'r') as f:
         pred = f.read()
     return pred
 
 
 if __name__ == "__main__":
-    model_output = "all_frames_gemini-1.5-flash" # Alternatively, blind_gpt4o, 16_frames_phi3, 16_frames_gpt-4o, 16_frames_gpt-4-turbo, human
+    global VIDEO_FILES_DIR
+    VIDEO_FILES_DIR = "video_files_20"
+    model_output = "32_frames_gpt-4o" # Alternatively, all_frames_gemini-1.5-flash, blind_gpt4o, 16_frames_phi3, 16_frames_gpt-4o, 16_frames_gpt-4-turbo, human
     scoring_model = "gpt-4o" # Alternatively, gpt-4o, gpt-4-turbo, gpt-3.5-turbo
     scores_lwm = []
     accs_lwm = []
@@ -185,9 +187,10 @@ if __name__ == "__main__":
     preds = []
     questions = []
     num_skipped = 0
+    tested_idxs = range(100)
     if False: # Save all model outputs to answers.txt
         pred_str = ""
-        for idx in tqdm(range(100)):
+        for idx in tqdm(tested_idxs):
             pred = idx2pred(idx, kind=model_output)
             print(pred)
             pred_str += str(idx + 1) + ". " + pred
@@ -196,7 +199,7 @@ if __name__ == "__main__":
             f.write(pred_str)
         exit()
 
-    for idx in tqdm(range(100)):
+    for idx in tqdm(tested_idxs):
         try:
             question = idx2question(idx)
             answer = idx2answer(idx)
@@ -205,10 +208,10 @@ if __name__ == "__main__":
             answers.append(answer)
             preds.append(pred)
             score_lwm = eval(get_score_lwm(question, answer, pred, model=scoring_model))
-            score_eqa = get_score_openeqa(question, answer, pred, model=scoring_model)
-            score_eqa_orig = get_score_openeqa_original(question, answer, pred, model=scoring_model)
-            score_eqa = eval(score_eqa)
-            score_eqa_orig = eval(score_eqa_orig)
+            #score_eqa = get_score_openeqa(question, answer, pred, model=scoring_model)
+            #score_eqa_orig = get_score_openeqa_original(question, answer, pred, model=scoring_model)
+            #score_eqa = eval(score_eqa)
+            #score_eqa_orig = eval(score_eqa_orig)
         except:
             #idx -= 1
             print("Error with evaluating video", idx, "skipping...")
@@ -220,14 +223,14 @@ if __name__ == "__main__":
         else:
             accs_lwm.append(0)
         scores_lwm.append(score_lwm['score'])
-        scores_eqa.append(score_eqa)
-        scores_eqa_orig.append(score_eqa_orig)
+        #scores_eqa.append(score_eqa)
+        #scores_eqa_orig.append(score_eqa_orig)
 
     print("Final scores for the model:", model_output, "as scored by model:", scoring_model)
     print("Mean score LWM:", sum(scores_lwm)/len(scores_lwm))
     print("Accuracy LWM:", sum(accs_lwm)/len(accs_lwm))
-    print("Mean score EQA (original):", sum(scores_eqa_orig)/len(scores_eqa_orig))
-    print("Mean score EQA (new):", sum(scores_eqa)/len(scores_eqa))
+    #print("Mean score EQA (original):", sum(scores_eqa_orig)/len(scores_eqa_orig))
+    #print("Mean score EQA (new):", sum(scores_eqa)/len(scores_eqa))
     print("Number of videos skipped:", num_skipped, "out of 100")
 
     # Save scores per video to file

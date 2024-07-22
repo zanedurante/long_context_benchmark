@@ -29,10 +29,10 @@ Generate it in the format: {'question': '...', 'answer': '...'}."""
 
 # Load the CSV files
 results_df = pd.read_csv('rewrite_10M_val.csv')
-num_videos_per_batch = 10
+num_videos_per_batch = 20
 
 # load in the first 5 video captions
-start_idx=4030 # TODO: Run with this value!
+start_idx=0 # 4030 # TODO: Run with this value!
 current_idx = start_idx #0
 num_samples_processed = start_idx / 10
 NUM_TOTAL = 4770 #1000

@@ -121,12 +121,12 @@ def create_video_from_images(image_files, output_path, fps=1):
         os.remove(image_file)
 
 if __name__ == "__main__":
-    video_dir = "video_files"
+    video_dir = "video_files_20"
     video_dirs = os.listdir(video_dir)
     video_dirs = sorted([os.path.join(video_dir, d) for d in video_dirs])
 
     # for each video_dir, get all the mp4 videos
-    NUM_FRAMES = 16
+    NUM_FRAMES = 32
     for video_dir in tqdm(video_dirs):
         video_paths = sorted([os.path.join(video_dir, f) for f in os.listdir(video_dir) if f.endswith(".mp4")])
         frames = get_frames_across_video_list(video_paths, NUM_FRAMES)

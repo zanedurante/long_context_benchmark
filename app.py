@@ -2,17 +2,17 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 import os
 
 app = Flask(__name__)
-BASE_DIR = "video_files"
+BASE_DIR = "video_files_20"
 
 @app.route('/')
 def index():
-    dirs = [d for d in os.listdir(BASE_DIR) if os.path.isdir(os.path.join(BASE_DIR, d))]
+    dirs = sorted([d for d in os.listdir(BASE_DIR) if os.path.isdir(os.path.join(BASE_DIR, d))])
     return render_template('index.html', directories=dirs)
 
 @app.route('/directory/<int:dir_id>')
 def directory(dir_id):
     dir_path = os.path.join(BASE_DIR, str(dir_id))
-    videos = [f for f in os.listdir(dir_path) if f.endswith('.mp4')]
+    videos = sorted([f for f in os.listdir(dir_path) if f.endswith('.mp4') and not f.endswith("combined.mp4")])
     questions = ""
     # try questions.txt first, then question.txt
     try:

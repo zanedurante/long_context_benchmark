@@ -79,12 +79,23 @@ Q: {question}
 
 def idx2question(idx):
     try:
-        with open(f'video_files/{idx}/questions.txt', 'r') as f:
+        with open(f'{video_file_dir}/{idx}/questions.txt', 'r') as f:
             question = f.read()
     except:
-        with open(f'video_files/{idx}/question.txt', 'r') as f:
+        with open(f'{video_file_dir}/{idx}/question.txt', 'r') as f:
             question = f.read()
     return question
+
+
+def get_prediction(question):
+    while True:
+        try:
+            pred = answer_question_eqa(question)
+            # Grab from A: to \n
+            pred = pred.split('A: ')[1].split('\n')[0]
+            return pred
+        except Exception as e:
+            print(f"Error encountered: {e}. Retrying...")
 
 
 GPT_4V_PROMPT = """You are an intelligent question answering agent. I will ask you questions about stock footage and you must provide an answer.
@@ -93,44 +104,45 @@ Given a user query, you must output `text` to answer to the question asked by th
 User Query: {question}"""
 
 
+
 if __name__ == "__main__":
-    NUM_FRAMES = 16 # Integer 2-64 or "all" which uses model-specific sampling (e.g. gemini)
+    NUM_FRAMES = 32 # Integer 2-64 or "all" which uses model-specific sampling (e.g. gemini)
+    video_file_dir = "video_files_20"
     special_idxs = [] # If [] then all videos are evaluated, otherwise only the special_idxs are evaluated
     if len(special_idxs) == 0:
         idxs = range(100)
     else:
         idxs = special_idxs
     if False: # set to true to run the phi-3-vision baseline
-        # TODO: Implement this
         from phi_3 import generate_phi3_response
         for idx in tqdm(idxs):
             question = idx2question(idx)
             input_text = GPT_4V_PROMPT.replace("{question}", question)
-            video_dir = f"video_files/{idx}/{NUM_FRAMES}_frames"
+            video_dir = f"{video_file_dir}/{idx}/{NUM_FRAMES}_frames"
             pred = generate_phi3_response(video_dir, input_text)
-            with open(f"video_files/{idx}/{NUM_FRAMES}_frames_phi3_answer.txt", "w") as f:
+            with open(f"{video_file_dir}/{idx}/{NUM_FRAMES}_frames_phi3_answer.txt", "w") as f:
                 f.write(pred + "\n")
 
-    if True: # Set to true to run gemini 1.5 pro/flash, need to activate google environment
+    if False: # Set to true to run gemini 1.5 pro/flash, need to activate google environment
         error_idxs = []
-        model = "gemini-1.5-flash" # Alternatively, gemini-1.5-flash, gemini-1.5-pro
+        model = "gemini-1.5-pro" # Alternatively, gemini-1.5-flash, gemini-1.5-pro
         gen_model = genai.GenerativeModel(model)
 
         for idx in tqdm(idxs):
             # check if output already exists
-            if os.path.exists(f'video_files/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt'):
+            if os.path.exists(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt'):
                 continue
             question = idx2question(idx)
             input_text = GPT_4V_PROMPT.replace("{question}", question)
 
             if type(NUM_FRAMES) == int:
-                video_dir = f"video_files/{idx}/{NUM_FRAMES}_frames"
+                video_dir = f"{video_file_dir}/{idx}/{NUM_FRAMES}_frames"
                 frames = os.listdir(video_dir)
                 frames = [f for f in frames if f.endswith('.mp4')] # change to .jpg for frame-level analysis
                 frames = sorted([f"{video_dir}/{frame}" for frame in frames])
 
             elif NUM_FRAMES == "all":
-                video_dir = f"video_files/{idx}"
+                video_dir = f"{video_file_dir}/{idx}"
                 frames = [file for file in os.listdir(video_dir) if file.endswith('.mp4')]
                 frames = sorted([f"{video_dir}/{frame}" for frame in frames])
 
@@ -157,7 +169,7 @@ if __name__ == "__main__":
                     print("Error with video", idx, "skipping...")
                     error_idxs.append(idx)
                     pred = "Sorry, I cannot answer this question."
-            with open(f'video_files/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt', "w") as f:
+            with open(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt', "w") as f:
                 f.write(pred + "\n")
             
         print("Error idxs:", error_idxs)
@@ -169,7 +181,7 @@ if __name__ == "__main__":
         for idx in tqdm(idxs):
             question = idx2question(idx)
             input_text = GPT_4V_PROMPT.replace("{question}", question)
-            video_dir = f"video_files/{idx}/{NUM_FRAMES}_frames"
+            video_dir = f"{video_file_dir}/{idx}/{NUM_FRAMES}_frames"
             try:
                 pred = prompt_gpt4v_images(video_dir, input_text, model=model)
             except:
@@ -180,17 +192,16 @@ if __name__ == "__main__":
                     print("Error with video", idx, "skipping...")
                     error_idxs.append(idx)
                     continue
-            with open(f'video_files/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt', "w") as f:
+            with open(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt', "w") as f:
                 f.write(pred + "\n")
         
         print("Error idxs:", error_idxs)
 
 
-    if False: # set to true to run blind baseline
+    if True: # set to true to run blind baseline
         for idx in tqdm(idxs):
             question = idx2question(idx)
-            pred = answer_question_eqa(question)
-            # Grab from A: to \n
-            pred = pred.split('A: ')[1].split('\n')[0]
-            with open(f'video_files/{idx}/blind_gpt4o_answer.txt', 'w') as f:
+            pred = get_prediction(question)
+
+            with open(f'{video_file_dir}/{idx}/blind_gpt4o_answer.txt', 'w') as f:
                 f.write(pred + '\n')
