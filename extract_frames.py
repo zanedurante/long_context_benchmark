@@ -121,7 +121,7 @@ def create_video_from_images(image_files, output_path, fps=1):
         os.remove(image_file)
 
 if __name__ == "__main__":
-    video_dir = "video_files_20"
+    video_dir = "video_files_10"
     video_dirs = os.listdir(video_dir)
     video_dirs = sorted([os.path.join(video_dir, d) for d in video_dirs])
 

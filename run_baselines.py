@@ -78,12 +78,8 @@ Q: {question}
 
 
 def idx2question(idx):
-    try:
-        with open(f'{video_file_dir}/{idx}/questions.txt', 'r') as f:
-            question = f.read()
-    except:
-        with open(f'{video_file_dir}/{idx}/question.txt', 'r') as f:
-            question = f.read()
+    with open(f'{video_file_dir}/{idx}/{QUESTION_CATEGORY}_question.txt', 'r') as f:
+        question = f.read()
     return question
 
 
@@ -106,9 +102,10 @@ User Query: {question}"""
 
 
 if __name__ == "__main__":
-    NUM_FRAMES = 32 # Integer 2-64 or "all" which uses model-specific sampling (e.g. gemini)
-    video_file_dir = "video_files_20"
+    NUM_FRAMES = 32 #"all" #32 # Integer 2-64 or "all" which uses model-specific sampling (e.g. gemini)
+    video_file_dir = "video_files_10"
     special_idxs = [] # If [] then all videos are evaluated, otherwise only the special_idxs are evaluated
+    QUESTION_CATEGORY = "action"
     if len(special_idxs) == 0:
         idxs = range(100)
     else:
@@ -120,7 +117,7 @@ if __name__ == "__main__":
             input_text = GPT_4V_PROMPT.replace("{question}", question)
             video_dir = f"{video_file_dir}/{idx}/{NUM_FRAMES}_frames"
             pred = generate_phi3_response(video_dir, input_text)
-            with open(f"{video_file_dir}/{idx}/{NUM_FRAMES}_frames_phi3_answer.txt", "w") as f:
+            with open(f"{video_file_dir}/{idx}/{NUM_FRAMES}_frames_phi3_{QUESTION_CATEGORY}_answer.txt", "w") as f:
                 f.write(pred + "\n")
 
     if False: # Set to true to run gemini 1.5 pro/flash, need to activate google environment
@@ -130,7 +127,7 @@ if __name__ == "__main__":
 
         for idx in tqdm(idxs):
             # check if output already exists
-            if os.path.exists(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt'):
+            if os.path.exists(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_{QUESTION_CATEGORY}_answer.txt'):
                 continue
             question = idx2question(idx)
             input_text = GPT_4V_PROMPT.replace("{question}", question)
@@ -150,6 +147,7 @@ if __name__ == "__main__":
             # TODO: Try with get_file? https://ai.google.dev/api/python/google/generativeai
             uploaded_files =[]
             for frame in frames:
+                #print("Uploading frame:", frame)
                 uploaded_file = genai.upload_file(path=frame, display_name=frame)
                 uploaded_files.append(uploaded_file)
             
@@ -157,6 +155,8 @@ if __name__ == "__main__":
             if type(NUM_FRAMES) == str:
                 # Wait for a while to allow for the video to be uploaded to google genai
                 sleep(20)
+            else:
+                sleep(10)
             try:
                 pred = gen_model.generate_content(entire_input, safety_settings=gemini_safety_settings).text
             except Exception as e:
@@ -168,14 +168,14 @@ if __name__ == "__main__":
                 except:
                     print("Error with video", idx, "skipping...")
                     error_idxs.append(idx)
-                    pred = "Sorry, I cannot answer this question."
-            with open(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt', "w") as f:
+                    continue
+            with open(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_{QUESTION_CATEGORY}_answer.txt', "w") as f:
                 f.write(pred + "\n")
             
         print("Error idxs:", error_idxs)
 
 
-    if False: # set to true to run gpt-4v/o with NUM_FRAMES frames baseline
+    if True: # set to true to run gpt-4v/o with NUM_FRAMES frames baseline
         error_idxs = []
         model = "gpt-4o"
         for idx in tqdm(idxs):
@@ -192,16 +192,16 @@ if __name__ == "__main__":
                     print("Error with video", idx, "skipping...")
                     error_idxs.append(idx)
                     continue
-            with open(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_answer.txt', "w") as f:
+            with open(f'{video_file_dir}/{idx}/{NUM_FRAMES}_frames_{model}_{QUESTION_CATEGORY}_answer.txt', "w") as f:
                 f.write(pred + "\n")
         
         print("Error idxs:", error_idxs)
 
 
-    if True: # set to true to run blind baseline
+    if False: # set to true to run blind baseline
         for idx in tqdm(idxs):
             question = idx2question(idx)
             pred = get_prediction(question)
 
-            with open(f'{video_file_dir}/{idx}/blind_gpt4o_answer.txt', 'w') as f:
+            with open(f'{video_file_dir}/{idx}/blind_gpt4o_{QUESTION_CATEGORY}_answer.txt.txt', 'w') as f:
                 f.write(pred + '\n')

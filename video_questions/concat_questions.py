@@ -1,9 +1,9 @@
 file_list = [
-    "video_questions_n=10_subset.txt",
-    "video_questions_n=10-start=100.txt",
-    "video_questions_n=10-start=116.txt",
-    # TODO: Run generate_video_questions again with start_idx=4030, add final file here
+    "video_questions_action_n=10-start=0.txt",
+    "video_questions_action_n=10-start=1.txt",
 ]
+
+output_file = "video_questions_action_n=10.txt"
 
 all_questions = []
 
@@ -12,5 +12,5 @@ for file in file_list:
         video_questions = eval(f.read())
         all_questions.extend(video_questions)
 
-with open(f'video_questions_n=10.txt', 'w') as f:
+with open(output_file, 'w') as f:
     f.write(str(all_questions) + '\n')

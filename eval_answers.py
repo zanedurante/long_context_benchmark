@@ -151,34 +151,31 @@ def get_score_lwm(question, answer, pred, model="gpt-4o"):
 import os
 
 def idx2question(idx):
-    try:
-        with open(f'{VIDEO_FILES_DIR}/{idx}/questions.txt', 'r') as f:
-            question = f.read()
-    except:
-        with open(f'{VIDEO_FILES_DIR}/{idx}/question.txt', 'r') as f:
-            question = f.read()
+    with open(f'{VIDEO_FILES_DIR}/{idx}/{QUESTION_CATEGORY}_question.txt', 'r') as f:
+        question = f.read()
     return question
 
 def idx2answer(idx):
-    try:
-        with open(f'{VIDEO_FILES_DIR}/{idx}/answers.txt', 'r') as f:
-            answer = f.read()
-    except:
-        with open(f'{VIDEO_FILES_DIR}/{idx}/answer.txt', 'r') as f:
-            answer = f.read()
+    with open(f'{VIDEO_FILES_DIR}/{idx}/{QUESTION_CATEGORY}_answer.txt', 'r') as f:
+        answer = f.read()
     return answer
 
 def idx2pred(idx, kind='human'):
-    with open(f'{VIDEO_FILES_DIR}/{idx}/{kind}_answer.txt', 'r') as f:
+    with open(f'{VIDEO_FILES_DIR}/{idx}/{kind}_{QUESTION_CATEGORY}_answer.txt', 'r') as f:
         pred = f.read()
+
+    #with open(f'{VIDEO_FILES_DIR}/{idx}/{kind}_answer.txt', 'r') as f:
+    #    pred = f.read()
     return pred
 
 
 if __name__ == "__main__":
-    global VIDEO_FILES_DIR
-    VIDEO_FILES_DIR = "video_files_20"
+    global VIDEO_FILES_DIR, QUESTION_CATEGORY
+    VIDEO_FILES_DIR = "video_files_10"
     model_output = "32_frames_gpt-4o" # Alternatively, all_frames_gemini-1.5-flash, blind_gpt4o, 16_frames_phi3, 16_frames_gpt-4o, 16_frames_gpt-4-turbo, human
     scoring_model = "gpt-4o" # Alternatively, gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+    QUESTION_CATEGORY = "action"
+
     scores_lwm = []
     accs_lwm = []
     scores_eqa = []
