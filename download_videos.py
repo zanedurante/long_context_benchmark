@@ -5,13 +5,11 @@ import requests
 from tqdm import tqdm
 
 PROBLEM_VIDEOS = [
-    "1_stock-footage-beef-fillet-slices-being-seasoned-with-pepper-and-salt.mp4"
+    "0001_stock-footage-beef-fillet-slices-being-seasoned-with-pepper-and-salt.mp4"
 ]
 
 NUM_SUBVIDEOS = 10
-CATEGORY="action"
-
-
+CATEGORY="general"
 
 OUTPUT_DIR = f'video_files_{NUM_SUBVIDEOS}'
 
@@ -40,13 +38,22 @@ with open(f'video_questions/video_questions_{CATEGORY}_n={NUM_SUBVIDEOS}.txt', '
 #    import pdb; pdb.set_trace()
 
 # get the file_paths
+all_questions = []
+all_answers = []
+all_final_paths = []
 for idx in tqdm(range(len(video_questions))):
     output_dir = OUTPUT_DIR + "/" + str(idx) + "/"
     os.makedirs(output_dir, exist_ok=True)
     file_paths = video_questions[idx]['file_paths']
     download_videos(file_paths, output_dir=output_dir)
     # also write the questions and answers to separate files
+    import pdb; pdb.set_trace()
     with open(output_dir + f'{CATEGORY}_question.txt', 'w') as f:
         f.write(str(video_questions[idx]['question']) + '\n')
     with open(output_dir + f'{CATEGORY}_answer.txt', 'w') as f:
         f.write(str(video_questions[idx]['answer']) + '\n')
+    
+    
+
+    
+    
