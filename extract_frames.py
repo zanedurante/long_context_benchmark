@@ -84,16 +84,24 @@ def calculate_frame_times_across_videos(video_paths, frame_times):
 
 def get_frames_across_video_list(video_paths, num_frames, transition_type='base', num_transition_frames=10):
     total_time = get_total_time_for_videos(video_paths)
-    # TODO: Change the following line
     frame_times = get_frame_times(total_time, num_frames)
     video_paths, frame_times = calculate_frame_times_across_videos(video_paths, frame_times)
     frames = []
+    descriptions = []
+
     for video_path, frame_time in zip(video_paths, frame_times):
-            frame = get_frame(video_path, frame_time)
-            frames.append(frame)
-            
+        frame = get_frame(video_path, frame_time)
+        frames.append(frame)
+
+        # Extract description from video path
+        if "_stock-" in video_path:
+            description = video_path.split("_stock-")[-1].split(".")[0]  # Extract description
+            descriptions.append(description)
+        else:
+            descriptions.append("default_description")  # Fallback if no description found
+
     if transition_type != 'base':
-        frames = apply_transitions(frames, video_paths, transition_type, num_transition_frames)
+        frames = apply_transitions(frames, video_paths, transition_type, num_transition_frames, descriptions)
     
     return frames
 
@@ -134,9 +142,9 @@ if __name__ == "__main__":
     parser.add_argument('--num_frames', type=int, default=32, 
                         help='Number of frames to extract')
     parser.add_argument('--transition_type', type=str, default='base', 
-                        choices=['base', 'fade', 'slide_right', 'slide_left'],
+                        choices=['base', 'fade', 'slide_right', 'slide_left', 'diffusion'],
                         help='Type of transition between frames')
-    parser.add_argument('--num_transition_frames', type=int, default=4, 
+    parser.add_argument('--num_transition_frames', type=int, default=10, 
                         help='Number of frames for transitions')
     parser.add_argument('--output_fps', type=int, default=4, 
                         help='FPS for the output video')
