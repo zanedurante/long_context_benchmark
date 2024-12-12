@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
 import os
+import argparse
 from tqdm import tqdm
 from PIL import Image
 from moviepy.editor import ImageSequenceClip, ImageClip
+from video_transitions import apply_transitions
 
 
 
@@ -80,15 +82,27 @@ def calculate_frame_times_across_videos(video_paths, frame_times):
     
     return final_video_paths, video_frame_times     
 
-def get_frames_across_video_list(video_paths, num_frames):
+def get_frames_across_video_list(video_paths, num_frames, transition_type='base', num_transition_frames=10):
     total_time = get_total_time_for_videos(video_paths)
-    # TODO: Change the following line
     frame_times = get_frame_times(total_time, num_frames)
     video_paths, frame_times = calculate_frame_times_across_videos(video_paths, frame_times)
     frames = []
+    descriptions = []
+
     for video_path, frame_time in zip(video_paths, frame_times):
-            frame = get_frame(video_path, frame_time)
-            frames.append(frame)
+        frame = get_frame(video_path, frame_time)
+        frames.append(frame)
+
+        # Extract description from video path
+        if "_stock-" in video_path:
+            description = video_path.split("_stock-")[-1].split(".")[0]  # Extract description
+            descriptions.append(description)
+        else:
+            descriptions.append("default_description")  # Fallback if no description found
+
+    if transition_type != 'base':
+        frames = apply_transitions(frames, video_paths, transition_type, num_transition_frames, descriptions)
+    
     return frames
 
 
@@ -121,25 +135,47 @@ def create_video_from_images(image_files, output_path, fps=1):
         os.remove(image_file)
 
 if __name__ == "__main__":
-    video_dir = "video_files_10"
-    video_dirs = os.listdir(video_dir)
-    video_dirs = sorted([os.path.join(video_dir, d) for d in video_dirs])
+    # Add argument parsing
+    parser = argparse.ArgumentParser(description='Extract frames from video directories')
+    parser.add_argument('--video_dir', type=str, default="video_files_10", 
+                        help='Directory containing video subdirectories')
+    parser.add_argument('--num_frames', type=int, default=32, 
+                        help='Number of frames to extract')
+    parser.add_argument('--transition_type', type=str, default='base', 
+                        choices=['base', 'fade', 'slide_right', 'slide_left', 'diffusion'],
+                        help='Type of transition between frames')
+    parser.add_argument('--num_transition_frames', type=int, default=10, 
+                        help='Number of frames for transitions')
+    parser.add_argument('--output_fps', type=int, default=4, 
+                        help='FPS for the output video')
+    
+    # Parse arguments
+    args = parser.parse_args()
 
-    # for each video_dir, get all the mp4 videos
-    NUM_FRAMES = 32
+    # Get video directories
+    video_dirs = os.listdir(args.video_dir)
+    video_dirs = sorted([os.path.join(args.video_dir, d) for d in video_dirs])[:1]
+    print(video_dirs)
+    
     for video_dir in tqdm(video_dirs):
         video_paths = sorted([os.path.join(video_dir, f) for f in os.listdir(video_dir) if f.endswith(".mp4")])
-        frames = get_frames_across_video_list(video_paths, NUM_FRAMES)
+        frames = get_frames_across_video_list(video_paths, args.num_frames, 
+                                              transition_type=args.transition_type, 
+                                              num_transition_frames=args.num_transition_frames)
+        
+        # Create a folder with transition type
+        transition_folder = os.path.join(video_dir, f"{args.num_frames}_frames_{args.transition_type}")
+        os.makedirs(transition_folder, exist_ok=True)
+
         for idx, frame in enumerate(frames):
-            os.makedirs(os.path.join(video_dir, f"{NUM_FRAMES}_frames"), exist_ok=True)
             idx_str = str(idx).zfill(4)
-            cv2.imwrite(f"{video_dir}/{NUM_FRAMES}_frames/frame_{idx_str}.jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(os.path.join(transition_folder, f"frame_{idx_str}.jpg"), 
+                        cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
         
         # Create a video from the frames
-        image_files = [os.path.join(video_dir, f"{NUM_FRAMES}_frames", f) for f in os.listdir(os.path.join(video_dir, f"{NUM_FRAMES}_frames")) if f.endswith(".jpg")]
+        image_files = [os.path.join(transition_folder, f) for f in os.listdir(transition_folder) if f.endswith(".jpg")]
         image_files = sorted(image_files)
-        output_path = os.path.join(video_dir, f"{NUM_FRAMES}_frames", "combined.mp4")
-        create_video_from_images(image_files, output_path, fps=1)
-        
-        
+        output_path = os.path.join(transition_folder, "combined.mp4")
+        create_video_from_images(image_files, output_path, fps=args.output_fps)
+
         
